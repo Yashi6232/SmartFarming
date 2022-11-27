@@ -4,10 +4,11 @@ from flask import Flask, render_template, request
  
 import numpy as np
 import os
+import tensorflow
  
-from keras.preprocessing.image import load_img
-from keras.preprocessing.image import img_to_array
-from keras.models import load_model
+from tensorflow.keras.preprocessing.image import load_img
+from tensorflow.keras.preprocessing.image import img_to_array
+from tensorflow.keras.models import load_model
  
 #load model
 model =load_model("model/v3_pred_cott_dis.h5")

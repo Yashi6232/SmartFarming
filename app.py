@@ -45,7 +45,24 @@ app = Flask(__name__)
  
 # render index.html page
 @app.route("/", methods=['GET', 'POST'])
-def home():
+def login():
+      if request.method == 'POST':
+        # Check if login credentials are valid
+        username = request.form['username']
+        password = request.form['password']
+        if username == 'myusername@gmail.com' and password == 'mypassword':
+          # Redirect to the index page on successful login
+          return redirect(url_for('index.html'))
+        else:
+          # Display an error message on the login page
+          return render_template('loginSignup.html', error='Invalid username or password')
+
+      # Render the login page
+      if request.method == 'GET':
+        return render_template('loginSignup.html')
+
+@app.route("/app", methods=['GET', 'POST'])
+def application():
         return render_template('index.html')
      
   

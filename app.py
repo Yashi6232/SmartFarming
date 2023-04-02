@@ -1,6 +1,6 @@
 #Import necessary libraries
 
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, session
  
 import numpy as np
 import os
@@ -9,13 +9,14 @@ import tensorflow
 from tensorflow.keras.preprocessing.image import load_img
 from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.keras.models import load_model
+
+from flask_sqlalchemy import SQLAlchemy
  
 #load model
 model =load_model("model/v3_pred_cott_dis.h5")
- 
 print('@@ Model loaded')
  
- 
+# prediction functionality functions
 def pred_cot_dieas(cott_plant):
   test_image = load_img(cott_plant, target_size = (150, 150)) # load image 
   print("@@ Got Image for prediction")
@@ -42,30 +43,88 @@ def pred_cot_dieas(cott_plant):
  
 # Create flask instance
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+
+
+# Database functionality
+db = SQLAlchemy(app)
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(100), nullable=False)
+
+def authenticate_user(email, password):
+    user = User.query.filter_by(email=email).first()
+    if user and user.password == password:
+        return True
+    else:
+        return False
+
+def create_user(name, email, password):
+    user = User(name=name, email=email, password=password)
+    db.session.add(user)
+    db.session.commit()
+
+# db functionality end
+
  
-# render index.html page
-@app.route("/", methods=['GET', 'POST'])
+# render index.html page at start
+@app.route('/')
+def home():
+    return render_template('index.html')
+    
+
+# render loginSignup page and login functionality
+@app.route("/login", methods=['GET', 'POST'])
 def login():
       if request.method == 'POST':
         # Check if login credentials are valid
-        username = request.form['username']
+        email = request.form['email']
         password = request.form['password']
-        if username == 'myusername@gmail.com' and password == 'mypassword':
-          # Redirect to the index page on successful login
-          return redirect(url_for('index.html'))
+        return redirect('/dashboard') # TOBE resolved for login
+        if authenticate_user(email, password):
+            session['email'] = email
+            return redirect('/dashboard')
         else:
-          # Display an error message on the login page
-          return render_template('loginSignup.html', error='Invalid username or password')
-
+            return render_template('loginSignup.html', error='Invalid email or password')
+        
       # Render the login page
       if request.method == 'GET':
         return render_template('loginSignup.html')
+      
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    if request.method == 'POST':
+        name = request.form['name']
+        email = request.form['email']
+        password = request.form['password']
+        # Create the user account
+        create_user(name, email, password)
+        session['email'] = email
+        return redirect('/dashboard')
+    else:
+        return render_template('loginSignup.html')
 
-@app.route("/app", methods=['GET', 'POST'])
-def application():
-        return render_template('index.html')
-     
-  
+# render dashboard page 
+@app.route('/dashboard', methods=['GET'])
+def dashboard():
+    return render_template('dashboard.html') # TOBO resolved for login
+    if 'email' in session:
+        email = session['email']
+        return render_template('dashboard.html', email=email)
+    else:
+        return redirect('/login')
+
+
+# logout functionality
+@app.route('/logout')
+def logout():
+    # Remove the email from the session if it's there
+    session.pop('email', None)
+    return redirect('/login')
+# render predict page for detection of image
 # get input image from client then predict class and render respective .html page for solution
 @app.route("/predict", methods = ['GET','POST'])
 def predict():

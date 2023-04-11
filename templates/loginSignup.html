@@ -25,7 +25,7 @@
           <div class="card-body" style="background-color:rgb(192, 222, 200);">
             <div class="tab-content">
               <div class="tab-pane fade show active" id="login">
-                <form action="/app">
+                <form action="/login" method="POST">
                   <div class="mb-3">
                     <label for="email" class="form-label">Email</label>
                     <input type="email" class="form-control" id="email" name="email">
@@ -38,7 +38,7 @@
                 </form>
               </div>
               <div class="tab-pane fade" id="signup">
-                <form>
+                <form action="/signup" method="POST">
                   <div class="mb-3">
                     <label for="name" class="form-label">Name</label>
                     <input type="text" class="form-control" id="name" name="name">
